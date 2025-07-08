@@ -286,7 +286,7 @@ describe("juice-shop-ctf", () => {
   test("should accept a config file", async () => {
     createConfigFile(`
   juiceShopUrl: https://juice-shop.herokuapp.com
-  ctfKey: https://raw.githubusercontent.com/bkimminich/juice-shop/master/ctf.key
+  ctfKey: https://raw.githubusercontent.com/juice-shop/juice-shop/master/ctf.key
   insertHints: paid
   insertHintUrls: paid
   insertHintSnippets: paid`);
@@ -298,7 +298,7 @@ describe("juice-shop-ctf", () => {
   test("should be able to ignore SslWarnings", async () => {
     createConfigFile(`
   juiceShopUrl: https://juice-shop.herokuapp.com
-  ctfKey: https://raw.githubusercontent.com/bkimminich/juice-shop/master/ctf.key
+  ctfKey: https://raw.githubusercontent.com/juice-shop/juice-shop/master/ctf.key
   insertHints: paid
   insertHintUrls: paid
   insertHintSnippets: paid`);
@@ -313,7 +313,7 @@ describe("juice-shop-ctf", () => {
   test("should fail when the config file cannot be parsed", async function () {
     createConfigFile(`
   juiceShopUrl: https://juice-shop.herokuapp.com
-  ctfKey: https://raw.githubusercontent.com/bkimminich/juice-shop/master/ctf.key
+  ctfKey: https://raw.githubusercontent.com/juice-shop/juice-shop/master/ctf.key
   insertHints`);
 
     const output = await runJuiceShopCtf([], {
@@ -330,7 +330,7 @@ describe("juice-shop-ctf", () => {
   test("should fail when the config file contains invalid values", async () => {
     createConfigFile(`
   juiceShopUrl: https://juice-shop.herokuapp.com
-  ctfKey: https://raw.githubusercontent.com/bkimminich/juice-shop/master/ctf.key
+  ctfKey: https://raw.githubusercontent.com/juice-shop/juice-shop/master/ctf.key
   insertHints: paid
   insertHintUrls: invalidValue
   insertHintSnippets: paid`);
