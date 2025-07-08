@@ -58,11 +58,13 @@
     "report-dir": "./build/reports/coverage"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.6.0",
+    "@inquirer/testing": "^2.1.48",
     "joi": "^17.13.3",
     "bcryptjs": "^2.4.3",
     "bluebird": "^3.7.2",
     "colors": "1.4.0",
-    "dateformat": "^4.6.3",
+    "dateformat": "^3.0.3",
     "inquirer": "^8.2.6",
     "js-yaml": "^4.1.0",
     "jssha": "^3.3.1",
