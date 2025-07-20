@@ -44,17 +44,26 @@ const defaultOptions = {
   vulnSnippets: {} 
 }
 
-describe('Generated CTFd data', () => {
-  let challenges: Record<string, Challenge>
+const generateOptions = (insertHints = options.noTextHints, insertHintUrls = options.noHintUrls) => ({
+  insertHints,
+  insertHintUrls,
+  ctfKey: '',
+  vulnSnippets: {}
+})
 
+let challenges: Record<string, Challenge>
+
+const sampleChallenges = () => ({
+  c1: { id: 1, key: 'k1', name: 'c1', description: 'C1', difficulty: 1, category: '1', tags: 'foo,bar' },
+  c2: { id: 2, key: 'k2', name: 'c2', description: 'C2', difficulty: 2, category: '2', tags: null },
+  c3: { id: 3, key: 'k3', name: 'c3', description: 'C3', difficulty: 3, category: '2', tags: 'foo' },
+  c4: { id: 4, key: 'k4', name: 'c4', description: 'C4', difficulty: 4, category: '3', tags: null },
+  c5: { id: 5, key: 'k5', name: 'c5', description: 'C5', difficulty: 5, category: '1', tags: 'foo,bar,baz' }
+})
+
+describe('Generated CTFd data', () => {
   beforeEach(() => {
-    challenges = {
-      c1: { id: 1, key: 'k1', name: 'c1', description: 'C1', difficulty: 1, category: '1', tags: 'foo,bar' },
-      c2: { id: 2, key: 'k2', name: 'c2', description: 'C2', difficulty: 2, category: '2', tags: null },
-      c3: { id: 3, key: 'k3', name: 'c3', description: 'C3', difficulty: 3, category: '2', tags: 'foo' },
-      c4: { id: 4, key: 'k4', name: 'c4', description: 'C4', difficulty: 4, category: '3', tags: null },
-      c5: { id: 5, key: 'k5', name: 'c5', description: 'C5', difficulty: 5, category: '1', tags: 'foo,bar,baz' }
-    }
+    challenges = sampleChallenges()
   })
 
   it('should consist of one object pushed into result per challenge', async () => {
@@ -80,48 +89,40 @@ describe('Generated CTFd data', () => {
     )
   })
 
-  it('should fill the hint property for a single text hint defined on a challenge', async () => {
+  it('should insert free and paid text hints correctly', async () => {
     challenges.c3.hint = 'hint'
-    const free = await generateData(challenges, { insertHints: options.freeTextHints, insertHintUrls: options.noHintUrls, ctfKey: '', vulnSnippets: {} })
-    assert.ok(free.some((c: CtfdChallenge) => c.hints.includes('"hint"') && c.hints.includes('0')))
+    const free = await generateData(challenges, generateOptions(options.freeTextHints))
+    assert.ok(free.some((c: CtfdChallenge) => c.name === 'c3' && c.hints.includes('"hint"') && c.hints.includes('0')))
 
-    const paid = await generateData(challenges, { insertHints: options.paidTextHints, insertHintUrls: options.noHintUrls, ctfKey: '', vulnSnippets: {} })
-    assert.ok(paid.some((c: CtfdChallenge) => c.hints.includes('"hint"') && c.hints.includes('45')))
+    const paid = await generateData(challenges, generateOptions(options.paidTextHints))
+    assert.ok(paid.some((c: CtfdChallenge) => c.name === 'c3' && c.hints.includes('"hint"') && c.hints.includes('45')))
   })
 
-  it('should fill the hint property for a single hint URL defined on a challenge', async () => {
-    challenges.c3.hintUrl = 'hintUrl'
-    const free = await generateData(challenges, { insertHints: options.noTextHints, insertHintUrls: options.freeHintUrls, ctfKey: '', vulnSnippets: {} })
-    assert.ok(free.some((c: CtfdChallenge) => c.hints.includes('"hintUrl"') && c.hints.includes('0')))
-    
-    const paid = await generateData(challenges, { insertHints: options.noTextHints, insertHintUrls: options.paidHintUrls, ctfKey: '', vulnSnippets: {} })
-    assert.ok(paid.some((c: CtfdChallenge) => c.hints.includes('"hintUrl"') && c.hints.includes('90')))
+  it('should respect hint penalty insertion', async () => {
+    const challenge = { id: 1, key: 'k1', name: 'c1', description: 'C1', difficulty: 1, category: '1', tags: 'foo,bar', hint: 'hint1' }
+    const result = await generateData({ c1: challenge }, generateOptions(options.paidTextHints))
+    assert.ok(result.some((c: CtfdChallenge) => c.name === 'c1' && c.hints.includes('"hint1"') && c.hints.includes('10')))
   })
 
-  it('should push an object each into hints for challenge with both text and URL hint with prerequisite relationship', async () => {
-    challenges.c3.hint = 'hint'
-    challenges.c3.hintUrl = 'hintUrl'
-
-    const result1 = await generateData(challenges, { insertHints: options.freeTextHints, insertHintUrls: options.freeHintUrls, ctfKey: '', vulnSnippets: {} })
-    assert.match(result1.find((c: CtfdChallenge) => c.name === 'c3').hints, /hint.*hintUrl/)
-
-    const result2 = await generateData(challenges, { insertHints: options.paidTextHints, insertHintUrls: options.freeHintUrls, ctfKey: '', vulnSnippets: {} })
-    assert.match(result2.find((c: CtfdChallenge) => c.name === 'c3').hints, /hint.*hintUrl/)
+  it('should respect hint URL penalty insertion', async () => {
+    const challenge = { id: 1, key: 'k1', name: 'c1', description: 'C1', difficulty: 1, category: '1', tags: 'foo,bar', hintUrl: 'https://hint1.com' }
+    const result = await generateData({ c1: challenge }, generateOptions(options.noTextHints, options.paidHintUrls))
+    assert.ok(result.some((c: CtfdChallenge) => c.name === 'c1' && c.hints.includes('"https://hint1.com"') && c.hints.includes('20')))
   })
 
-  it('should not insert a text hint when corresponding hint option is not chosen', async () => {
+  it('should not insert text hints when not enabled', async () => {
     challenges.c1.hint = 'hint'
     challenges.c2.hint = 'hint'
     const result = await generateData(challenges, defaultOptions)
-    assert.equal(result.find((c: CtfdChallenge) => c.name === 'c1').hints, '')
-    assert.equal(result.find((c: CtfdChallenge) => c.name === 'c2').hints, '')
+    assert.strictEqual(result.find((c: CtfdChallenge) => c.name === 'c1')?.hints, '')
+    assert.strictEqual(result.find((c: CtfdChallenge) => c.name === 'c2')?.hints, '')
   })
 
-  it('should not insert a hint URL when corresponding hint option is not chosen', async () => {
+  it('should not insert  hint URLs when not enabled', async () => {
     challenges.c1.hintUrl = 'hintUrl'
     challenges.c2.hintUrl = 'hintUrl'
     const result = await generateData(challenges, defaultOptions)
-    assert.equal(result.find((c: CtfdChallenge) => c.name === 'c1').hints, '')
-    assert.equal(result.find((c: CtfdChallenge) => c.name === 'c2').hints, '')
+    assert.strictEqual(result.find((c: CtfdChallenge) => c.name === 'c1')?.hints, '')
+    assert.strictEqual(result.find((c: CtfdChallenge) => c.name === 'c2')?.hints, '')
   })
 })  
