@@ -28,9 +28,9 @@ WORKDIR /juice-shop-ctf
 RUN npm install --omit=dev --no-fund
 
 COPY --from=builder /juice-shop-ctf/dist /juice-shop-ctf/dist
-COPY --from=builder /juice-shop-ctf/bin /juice-shop-ctf/bin
 COPY --from=builder /juice-shop-ctf/data /juice-shop-ctf/data
 COPY --from=builder /juice-shop-ctf/lib /juice-shop-ctf/lib
+COPY --from=builder /juice-shop-ctf/dist/bin /juice-shop-ctf/bin
 
 VOLUME /data
 WORKDIR /data
