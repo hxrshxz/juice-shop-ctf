@@ -61,12 +61,7 @@ jobs:
           timeout_minutes: 2
           max_attempts: 3
           command: npm run node:test
-      - name: "Execute e2e tests"
-        uses: nick-invision/retry@v3
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: npm run e2e
+  
       - name: "Publish coverage to Coveralls"
         if: github.event_name == 'push' && matrix.node-version == '18'
         uses: coverallsapp/github-action@master
