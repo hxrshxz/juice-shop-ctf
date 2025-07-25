@@ -4,7 +4,7 @@ WORKDIR /juice-shop-ctf
 RUN chown -R node .
 USER node
 ARG DEV_BUILD=false
-RUN if [ ${DEV_BUILD} = true ]; then npm i && npm lint && npm test && npm run e2e; else npm install --production --unsafe-perm; fi
+RUN if [ ${DEV_BUILD} = true ]; then npm i && npm lint && npm test && npm run e2e; else npm install --production --unsafe-perm && npm run build; fi
 
 FROM node:20-alpine
 ARG BUILD_DATE
