@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "downlevelIteration": true,
     "skipLibCheck": true,
+    "erasableSyntaxOnly": true,
   },
   "include": ["index.ts", "bin", "lib", "test/**/*.ts"]
 }
