@@ -28,7 +28,12 @@ async function fetchCodeSnippets(
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined
 
-  const fetchOptions: { agent: https.Agent | undefined } = { agent }
+  const fetchOptions = agent ? {
+    signal: undefined,  // To satisfy RequestInit interface
+    dispatcher: {
+      httpsAgent: agent
+    }
+  } : undefined
 
   try {
     const challengesResponse = await fetch(`${juiceShopUrl}/api/challenges`, fetchOptions as any);
@@ -61,8 +66,9 @@ async function fetchCodeSnippets(
     }
 
     return snippets
-  } catch (error: any) {
-    throw new Error('Failed to fetch snippet from API! ' + error.message)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error('Failed to fetch snippet from API! ' + errorMessage)
   }
 }
 

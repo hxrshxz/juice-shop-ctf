@@ -15,12 +15,12 @@ async function fetchChallenges (
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined
 
-  const options = { agent }
+  const options: RequestInit & { agent?: https.Agent } = { agent }
 
   try {
     const response = await fetch(
       `${juiceShopUrl}/api/Challenges`,
-      options as any
+      options
     )
 
     if (!response.ok) {

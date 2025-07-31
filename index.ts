@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import 'colors' // no assignment necessary as this module extends the String prototype
+import colors from 'colors/safe'
 import inquirer from 'inquirer'
 import fetchSecretKey from './lib/fetchSecretKey'
 import fetchChallenges from './lib/fetchChallenges'
@@ -100,7 +100,6 @@ interface Argv {
   config?: string
   output?: string
   ignoreSslWarnings?: boolean
-  [key: string]: any
 }
 
 async function getConfig (
@@ -118,7 +117,7 @@ async function getConfig (
       insertHintSnippets: config.insertHintSnippets
     }))
   }
-  return await inquirer.prompt(questions)
+  return await inquirer.prompt<ConfigAnswers>(questions)
 }
 
 export default async function juiceShopCtfCli() {
@@ -126,7 +125,8 @@ export default async function juiceShopCtfCli() {
   console.log(`Generate ${'OWASP Juice Shop'.bold} challenge archive for setting up ${juiceShopOptions.ctfdFramework.bold}, ${juiceShopOptions.fbctfFramework.bold} or ${juiceShopOptions.rtbFramework.bold} score server`)
 
   try {
-    const answers = await getConfig(argv, questions)
+    const resolvedArgv = await Promise.resolve(argv)
+    const answers = await getConfig(resolvedArgv, questions)
 
     console.log()
 
@@ -141,7 +141,7 @@ export default async function juiceShopCtfCli() {
       fetchCodeSnippets({ juiceShopUrl: answers.juiceShopUrl, ignoreSslWarnings: argv.ignoreSslWarnings ?? false, skip: !shouldFetchSnippets })
     ] as const
 
-    const [fetchedSecretKey, challenges, countryMapping, vulnSnippets] = await Promise.all(fetchOperations)
+    const [fetchedSecretKey, challenges, countryMapping, vulnSnippets] = await Promise.all(fetchOperations) as [string, Challenge[], object, object]
 
     await generateCtfExport(
       answers.ctfFramework || juiceShopOptions.ctfdFramework,
@@ -158,6 +158,6 @@ export default async function juiceShopCtfCli() {
       }
     );
   } catch (err) {
-    console.log('Failed to write output to file!', err)
+    console.error('Failed to write output to file!', err)
   }
 }
