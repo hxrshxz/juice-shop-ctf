@@ -22,12 +22,17 @@ async function fetchCountryMapping(
   const options = { agent };
  
   try {
-    const response = await fetch(challengeMapFile, options as any)
+    const response = await fetch(challengeMapFile, fetchOptions)
     const text = await response.text()
-    const data = yaml.loadAll(text) as any[]
+    const data = yaml.loadAll(text) as Array<{
+      ctf: {
+        countryMapping: CountryMapping
+      }
+    }>
     return data[0].ctf.countryMapping
-  } catch (err: any) {
-    throw new Error('Failed to fetch country mapping from API! ' + err.message)
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    throw new Error('Failed to fetch country mapping from API! ' + errorMessage)
   }
 }
 

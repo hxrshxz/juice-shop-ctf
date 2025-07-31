@@ -23,7 +23,19 @@ const generateRandomString: GenerateRandomString = function (length: number): st
   return text
 }
 
-async function createDummyUser () {
+interface DummyUser {
+  name: string
+  active: boolean
+  admin: boolean
+  protected: boolean
+  visible: boolean
+  password_hash: string
+  points: number
+  logo: string
+  data: Record<string, unknown>
+}
+
+async function createDummyUser (): Promise<DummyUser> {
   const SALT_ROUNDS = 12
   return {
     name: generateRandomString(32),
@@ -54,11 +66,11 @@ async function createFbctfExport(
   fbctfTemplate.teams.teams.push(await createDummyUser())
 
   // Add all challenges
-  fbctfTemplate.levels.levels = challenges.map(({ key, name, description, difficulty, hint, hintUrl }) => {
+  const mappedLevels = challenges.map(({ key, name, description, difficulty, hint, hintUrl }) => {
     const country = countryMapping[key]
-    if (!country) {
+    if (country === undefined) {
       console.warn(`Challenge "${name}" does not have a country mapping and will not appear in the CTF game!`.yellow)
-      return false
+      return null
     }
 
     const hintText: string[] = []
@@ -88,8 +100,10 @@ async function createFbctfExport(
       penalty: calculateHintCost({ difficulty }, insertHints) + calculateHintCost({ difficulty }, insertHintUrls) + calculateHintCost({ difficulty }, insertHintSnippets),
       links: [],
       attachments: []
-    }
-  }).filter(Boolean)// Filter out levels without a proper country mapping.
+    } as FbctfLevel
+  })
+
+  fbctfTemplate.levels.levels = mappedLevels.filter((level): level is FbctfLevel => level !== null)
 
   return fbctfTemplate
 }

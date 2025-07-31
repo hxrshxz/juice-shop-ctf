@@ -28,12 +28,14 @@ async function fetchCodeSnippets(
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined
 
-  const fetchOptions = agent ? {
-    signal: undefined,  // To satisfy RequestInit interface
-    dispatcher: {
-      httpsAgent: agent
-    }
-  } : undefined
+  const fetchOptions = agent !== undefined
+    ? {
+        signal: undefined, // To satisfy RequestInit interface
+        dispatcher: {
+          httpsAgent: agent
+        }
+      }
+    : undefined
 
   try {
     const challengesResponse = await fetch(`${juiceShopUrl}/api/challenges`, fetchOptions as any);
