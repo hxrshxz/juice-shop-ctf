@@ -5,9 +5,7 @@
 
 const jsSHA = require('jssha')
 
-interface HmacSha1 {
-  (secretKey: string, text: string): string
-}
+type HmacSha1 = (secretKey: string, text: string) => string
 
 function hmacSha1 (secretKey: string, text: string): string {
   const shaObj = new jsSHA('SHA-1', 'TEXT') // eslint-disable-line new-cap

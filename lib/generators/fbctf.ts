@@ -12,9 +12,7 @@ const path = require('path')
 const fbctfOptions = require('../options')
 const hmac = require('../hmac')
 
-interface GenerateRandomString {
-  (length: number): string
-}
+type GenerateRandomString = (length: number) => string
 
 const generateRandomString: GenerateRandomString = function (length: number): string {
   let text = ''
@@ -25,13 +23,13 @@ const generateRandomString: GenerateRandomString = function (length: number): st
   return text
 }
 
-function loadTemplate () {
-  return new Promise((resolve, reject) => {
+async function loadTemplate () {
+  return await new Promise((resolve, reject) => {
     const filename = path.join(__dirname, '../../data/fbctfImportTemplate.json')
 
     readFile(filename, { encoding: 'utf8' }, (err: NodeJS.ErrnoException | null, text: string) => {
       if (err) {
-      reject(err)
+        reject(err)
       }
       resolve(JSON.parse(text))
     })

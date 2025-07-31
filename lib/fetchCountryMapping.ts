@@ -7,9 +7,9 @@ import * as https from 'https'
 import { options } from 'joi'
 import * as yaml from 'js-yaml'
 
-async function fetchChallenges(challengeMapFile: string, ignoreSslWarnings: boolean) {
+async function fetchChallenges (challengeMapFile: string, ignoreSslWarnings: boolean) {
   if (!challengeMapFile) {
-    return Promise.resolve()
+    await Promise.resolve(); return
   }
 
   const agent = ignoreSslWarnings
