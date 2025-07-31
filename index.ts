@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import 'colors' // no assignment necessary as this module extends the String prototype
+import colors from 'colors/safe'
 import inquirer from 'inquirer'
 import fetchSecretKey from './lib/fetchSecretKey'
 import fetchChallenges from './lib/fetchChallenges'
@@ -12,24 +12,27 @@ import fetchCodeSnippets from './lib/fetchCodeSnippets'
 import readConfigStream from './lib/readConfigStream'
 import * as options from './lib/options'
 import * as fs from 'fs'
-
 import generateCtfExport from './lib/generators/'
+import yargs from 'yargs'
 
-const argv = require('yargs')
+const argv = yargs
   .option('config', {
     alias: 'c',
-    describe: 'provide a configuration file'
+    describe: 'provide a configuration file',
+    type: 'string'
   })
   .option('output', {
     alias: 'o',
-    describe: 'change the output file'
+    describe: 'change the output file',
+    type: 'string'
   })
   .option('ignoreSslWarnings', {
     alias: 'i',
-    describe: 'ignore tls certificate warnings'
+    describe: 'ignore tls certificate warnings',
+    type: 'boolean'
   })
   .help()
-  .argv
+  .argv as { config?: string, output?: string, ignoreSslWarnings?: boolean }
 
 const DEFAULT_JUICE_SHOP_URL = process.env.DEFAULT_JUICE_SHOP_URL ?? 'https://juice-shop.herokuapp.com'
 
@@ -93,18 +96,26 @@ interface ConfigAnswers {
   insertHintSnippets: string
 }
 
+interface Challenge {
+  id: number
+  name: string
+  description: string
+  difficulty: number
+  category: string
+  [key: string]: any
+}
+
 interface Argv {
   config?: string
   output?: string
   ignoreSslWarnings?: boolean
-  [key: string]: any
 }
 
 async function getConfig (
   argv: Argv,
   questions: Array<Record<string, any>>
 ): Promise<ConfigAnswers> {
-  if (argv.config) {
+  if (argv.config != null && argv.config !== '') {
     return await readConfigStream(fs.createReadStream(argv.config)).then((config: any) => ({
       ctfFramework: config.ctfFramework ?? options.ctfdFramework,
       juiceShopUrl: config.juiceShopUrl,
@@ -115,15 +126,21 @@ async function getConfig (
       insertHintSnippets: config.insertHintSnippets
     }))
   }
-  return await inquirer.prompt(questions)
+  return await inquirer.prompt<ConfigAnswers>(questions)
 }
 
-const juiceShopCtfCli = async () => {
+const juiceShopCtfCli = async (): Promise<void> => {
   console.log()
-  console.log(`Generate ${'OWASP Juice Shop'.bold} challenge archive for setting up ${options.ctfdFramework.bold}, ${options.fbctfFramework.bold} or ${options.rtbFramework.bold} score server`)
+  const juiceShopBold = colors.bold('OWASP Juice Shop')
+  const ctfdFrameworkBold = colors.bold(options.ctfdFramework)
+  const fbctfFrameworkBold = colors.bold(options.fbctfFramework)
+  const rtbFrameworkBold = colors.bold(options.rtbFramework)
+
+  console.log(`Generate ${juiceShopBold} challenge archive for setting up ${ctfdFrameworkBold}, ${fbctfFrameworkBold} or ${rtbFrameworkBold} score server`)
 
   try {
-    const answers = await getConfig(argv, questions)
+    const resolvedArgv = await Promise.resolve(argv)
+    const answers = await getConfig(resolvedArgv, questions)
 
     console.log()
 
@@ -132,9 +149,9 @@ const juiceShopCtfCli = async () => {
 
     // Prepare fetch operations
     const fetchOperations = [
-      fetchSecretKey(answers.ctfKey, argv.ignoreSslWarnings),
-      fetchChallenges(answers.juiceShopUrl, argv.ignoreSslWarnings),
-      fetchCountryMapping(answers.countryMapping ?? '', argv.ignoreSslWarnings)
+      fetchSecretKey(answers.ctfKey ?? '', resolvedArgv.ignoreSslWarnings ?? false),
+      fetchChallenges(answers.juiceShopUrl, resolvedArgv.ignoreSslWarnings ?? false),
+      fetchCountryMapping(answers.countryMapping ?? '', resolvedArgv.ignoreSslWarnings ?? false)
     ]
 
     // Conditionally add snippets fetch
@@ -142,19 +159,19 @@ const juiceShopCtfCli = async () => {
       fetchOperations.push(
         fetchCodeSnippets({
           juiceShopUrl: answers.juiceShopUrl,
-          ignoreSslWarnings: argv.ignoreSslWarnings
+          ignoreSslWarnings: resolvedArgv.ignoreSslWarnings ?? false
         }).catch((error: Error): Record<string, unknown> => {
-          console.log(`Warning: ${error.message}`.yellow)
+          console.log(colors.yellow(`Warning: ${error.message}`))
           return {} // Return empty object on error to continue process
         })
       )
     }
 
-    const [fetchedSecretKey, challenges, countryMapping, vulnSnippets] = await Promise.all(fetchOperations)
+    const [fetchedSecretKey, challenges, countryMapping, vulnSnippets] = await Promise.all(fetchOperations) as [string, Challenge[], object, object]
 
-    const snippets = shouldFetchSnippets ? vulnSnippets : []
+    const snippets = shouldFetchSnippets ? vulnSnippets : {}
 
-    await generateCtfExport(answers.ctfFramework || options.ctfdFramework, challenges, {
+    await generateCtfExport(answers.ctfFramework ?? options.ctfdFramework, challenges, {
       juiceShopUrl: answers.juiceShopUrl,
       insertHints: answers.insertHints,
       insertHintUrls: answers.insertHintUrls,
@@ -162,10 +179,10 @@ const juiceShopCtfCli = async () => {
       ctfKey: fetchedSecretKey,
       countryMapping,
       vulnSnippets: snippets,
-      outputLocation: argv.output
+      outputLocation: resolvedArgv.output ?? 'OWASP_Juice_Shop.CTF-*.zip'
     })
   } catch (err) {
-    console.log('Failed to write output to file!', err)
+    console.error('Failed to write output to file!', err)
   }
 }
 
