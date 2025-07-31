@@ -4,25 +4,38 @@
  */
 
 import * as https from 'https'
-import { options } from 'joi'
 import * as yaml from 'js-yaml'
 
-async function fetchChallenges (challengeMapFile: string, ignoreSslWarnings: boolean) {
-  if (!challengeMapFile) {
-    await Promise.resolve(); return
+type CountryMapping = Record<string, string>
+
+async function fetchChallenges (
+  challengeMapFile: string | undefined,
+  ignoreSslWarnings: boolean
+): Promise<CountryMapping | undefined> {
+  if (challengeMapFile === undefined || challengeMapFile.length === 0) {
+    await Promise.resolve()
+    return undefined
   }
 
   const agent = ignoreSslWarnings
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined
 
+  const fetchOptions: RequestInit & { agent?: https.Agent } = {
+    agent
+  }
   try {
-    const response = await fetch(challengeMapFile, options as any)
+    const response = await fetch(challengeMapFile, fetchOptions)
     const text = await response.text()
-    const data = yaml.loadAll(text) as any[]
+    const data = yaml.loadAll(text) as Array<{
+      ctf: {
+        countryMapping: CountryMapping
+      }
+    }>
     return data[0].ctf.countryMapping
-  } catch (err: any) {
-    throw new Error('Failed to fetch country mapping from API! ' + err.message)
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    throw new Error('Failed to fetch country mapping from API! ' + errorMessage)
   }
 }
 

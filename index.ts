@@ -94,15 +94,6 @@ interface ConfigAnswers {
   insertHintSnippets: string
 }
 
-interface Challenge {
-  id: number
-  name: string
-  description: string
-  difficulty: number
-  category: string
-  [key: string]: any
-}
-
 interface Argv {
   config?: string
   output?: string
@@ -145,32 +136,27 @@ const juiceShopCtfCli = async (): Promise<void> => {
     // Only fetch snippets if user wants them
     const shouldFetchSnippets = answers.insertHintSnippets !== options.noHintSnippets
 
-    // Prepare fetch operations
-    const fetchOperations = [
+    // Fetch initial data (secretKey, challenges, countryMapping)
+    const [fetchedSecretKey, challenges, countryMapping] = await Promise.all([
       fetchSecretKey(answers.ctfKey ?? '', resolvedArgv.ignoreSslWarnings ?? false),
       fetchChallenges(answers.juiceShopUrl, resolvedArgv.ignoreSslWarnings ?? false),
       fetchCountryMapping(answers.countryMapping ?? '', resolvedArgv.ignoreSslWarnings ?? false)
-    ]
+    ])
 
-    // Conditionally add snippets fetch
+    let snippets = {}
     if (shouldFetchSnippets) {
-      fetchOperations.push(
-        fetchCodeSnippets({
+      try {
+        snippets = await fetchCodeSnippets({
           juiceShopUrl: answers.juiceShopUrl,
           ignoreSslWarnings: resolvedArgv.ignoreSslWarnings ?? false
-        }).catch((error: Error): Record<string, unknown> => {
-          console.log(colors.yellow(`Warning: ${error.message}`))
-          return {} // Return empty object on error to continue process
         })
-      )
+      } catch (error) {
+        console.log(colors.yellow(`Warning: ${(error as Error).message}`))
+        snippets = {} // Return empty object on error to continue process
+      }
     }
 
-    const [fetchedSecretKey, challenges, countryMapping, vulnSnippets] = await Promise.all(fetchOperations) as [string, Challenge[], object, object]
-
-    const snippets = shouldFetchSnippets ? vulnSnippets : {}
-
     await generateCtfExport(answers.ctfFramework ?? options.ctfdFramework, challenges, {
-      juiceShopUrl: answers.juiceShopUrl,
       insertHints: answers.insertHints,
       insertHintUrls: answers.insertHintUrls,
       insertHintSnippets: answers.insertHintSnippets,

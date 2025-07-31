@@ -6,11 +6,17 @@
 import 'colors'
 import calculateHintCost from '../calculateHintCost'
 import calculateScore from '../calculateScore'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { hash } = require('bcryptjs')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { readFile } = require('fs')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const fbctfOptions = require('../options')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmac = require('../hmac')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 
 type GenerateRandomString = (length: number) => string
 
@@ -23,20 +29,33 @@ const generateRandomString: GenerateRandomString = function (length: number): st
   return text
 }
 
-async function loadTemplate () {
+async function loadTemplate (): Promise<any> {
   return await new Promise((resolve, reject) => {
     const filename = path.join(__dirname, '../../data/fbctfImportTemplate.json')
 
     readFile(filename, { encoding: 'utf8' }, (err: NodeJS.ErrnoException | null, text: string) => {
-      if (err) {
+      if (err !== null) {
         reject(err)
+        return
       }
       resolve(JSON.parse(text))
     })
   })
 }
 
-async function createDummyUser () {
+interface DummyUser {
+  name: string
+  active: boolean
+  admin: boolean
+  protected: boolean
+  visible: boolean
+  password_hash: string
+  points: number
+  logo: string
+  data: Record<string, unknown>
+}
+
+async function createDummyUser (): Promise<DummyUser> {
   const SALT_ROUNDS = 12
   return {
     name: generateRandomString(32),
@@ -73,12 +92,30 @@ interface FbctfExportOptions {
   vulnSnippets: Record<string, string>
 }
 
+interface FbctfLevel {
+  type: string
+  title: string
+  active: boolean
+  description: string
+  entity_iso_code: string
+  category: string
+  points: number
+  bonus: number
+  bonus_dec: number
+  bonus_fix: number
+  flag: string
+  hint: string
+  penalty: number
+  links: unknown[]
+  attachments: unknown[]
+}
+
 interface FbctfTemplate {
   teams: {
-    teams: any[]
+    teams: DummyUser[]
   }
   levels: {
-    levels: any[]
+    levels: FbctfLevel[]
   }
 }
 
@@ -98,21 +135,22 @@ async function createFbctfExport (
   fbctfTemplate.teams.teams.push(await createDummyUser())
 
   // Add all challenges
-  fbctfTemplate.levels.levels = challenges.map(({ key, name, description, difficulty, hint, hintUrl }) => {
+  const mappedLevels = challenges.map(({ key, name, description, difficulty, hint, hintUrl }) => {
     const country = countryMapping[key]
-    if (!country) {
+    if (country === undefined) {
       console.warn(`Challenge "${name}" does not have a country mapping and will not appear in the CTF game!`.yellow)
-      return false
+      return null
     }
 
     const hintText: string[] = []
-    if (insertHints !== fbctfOptions.noTextHints) {
+    if (insertHints !== fbctfOptions.noTextHints && hint !== undefined && hint !== null && hint !== '') {
       hintText.push(hint)
     }
-    if (insertHintUrls !== fbctfOptions.noHintUrls) {
+    if (insertHintUrls !== fbctfOptions.noHintUrls && hintUrl !== undefined && hintUrl !== null && hintUrl !== '') {
       hintText.push(hintUrl)
     }
-    if (insertHintSnippets !== fbctfOptions.noHintSnippets && vulnSnippets[key]) {
+    if (insertHintSnippets !== fbctfOptions.noHintSnippets &&
+        vulnSnippets[key] !== undefined && vulnSnippets[key] !== null && vulnSnippets[key] !== '') {
       hintText.push(vulnSnippets[key])
     }
 
@@ -132,8 +170,10 @@ async function createFbctfExport (
       penalty: calculateHintCost({ difficulty }, insertHints) + calculateHintCost({ difficulty }, insertHintUrls) + calculateHintCost({ difficulty }, insertHintSnippets),
       links: [],
       attachments: []
-    }
-  }).filter(Boolean)// Filter out levels without a proper country mapping.
+    } as FbctfLevel
+  })
+
+  fbctfTemplate.levels.levels = mappedLevels.filter((level): level is FbctfLevel => level !== null)
 
   return fbctfTemplate
 }
