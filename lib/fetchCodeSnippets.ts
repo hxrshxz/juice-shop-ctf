@@ -32,12 +32,14 @@ async function fetchCodeSnippets (options: string | FetchOptions): Promise<Recor
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined
 
-  const fetchOptions = agent ? {
-    signal: undefined,  // To satisfy RequestInit interface
-    dispatcher: {
-      httpsAgent: agent
-    }
-  } : undefined
+  const fetchOptions = agent !== undefined
+    ? {
+        signal: undefined, // To satisfy RequestInit interface
+        dispatcher: {
+          httpsAgent: agent
+        }
+      }
+    : undefined
 
   try {
     const challengesResponse = await fetch(`${juiceShopUrl}/snippets`, fetchOptions)
@@ -48,7 +50,7 @@ async function fetchCodeSnippets (options: string | FetchOptions): Promise<Recor
 
     const responseData = await challengesResponse.json() as SnippetsApiResponse
 
-    if (!responseData.challenges || !Array.isArray(responseData.challenges)) {
+    if (responseData.challenges === undefined || responseData.challenges === null || !Array.isArray(responseData.challenges)) {
       throw new Error('Invalid challenges format in response')
     }
 
@@ -65,7 +67,7 @@ async function fetchCodeSnippets (options: string | FetchOptions): Promise<Recor
 
       const snippetData = await snippetRes.json() as SnippetApiResponse
 
-      if (snippetData.snippet) {
+      if (snippetData.snippet !== undefined && snippetData.snippet !== null && snippetData.snippet !== '') {
         snippets[challengeKey] = snippetData.snippet
       }
     }
