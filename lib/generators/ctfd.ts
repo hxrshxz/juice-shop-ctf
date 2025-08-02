@@ -3,11 +3,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-import calculateScore from "../calculateScore"
-import calculateHintCost from "../calculateHintCost"
+import calculateScore from '../calculateScore'
+import calculateHintCost from '../calculateHintCost'
 const hmacSha1 = require('../hmac')
 const juiceShopOptions = require('../options')
-
 
 interface Challenge {
   name: string
@@ -20,9 +19,7 @@ interface Challenge {
   tags?: string
 }
 
-interface VulnSnippets {
-  [key: string]: string
-}
+type VulnSnippets = Record<string, string>
 
 interface CreateCtfdExportOptions {
   insertHints: string
@@ -48,8 +45,8 @@ interface ChallengeRow {
   hints?: string
 }
 
-function createCtfdExport (
-  challenges: { [key: string]: Challenge },
+async function createCtfdExport (
+  challenges: Record<string, Challenge>,
   { insertHints, insertHintUrls, insertHintSnippets, ctfKey, vulnSnippets }: CreateCtfdExportOptions
 ): Promise<ChallengeRow[]> {
   function insertChallengeHints (challenge: Challenge): string[] {
@@ -83,7 +80,7 @@ function createCtfdExport (
   //  In the flags section of the returned data we iterate through the result of string splitting by comma, and compute the hash of the single flag key + challenge name.
   //  Format expected is: challenge3,challenge description,category3,100,dynamic,visible,0,"flag1,flag2,flag3","tag1,tag2,tag3","hint1,hint2,hint3","{""initial"":100, ""minimum"":10, ""decay"":10}"
   //  If we provide a single key with no commas, we do not incapsulate the output in a "" pair.
-  return new Promise<ChallengeRow[]>((resolve, reject) => {
+  return await new Promise<ChallengeRow[]>((resolve, reject) => {
     try {
       const data: ChallengeRow[] = []
       for (const key in challenges) {
@@ -103,12 +100,12 @@ function createCtfdExport (
             hint_cost: insertChallengeHintCosts(challenge),
             type_data: ''
           }
-          const hints: { content: string, cost: number }[] = []
+          const hints: Array<{ content: string, cost: number }> = []
           if (row.hints_raw && row.hints_raw.length !== 0) {
             for (let index = 0; index < row.hints_raw.length; index++) {
               const hint = {
                 content: row.hints_raw[index],
-                cost: row.hint_cost && row.hint_cost[index] !== undefined ? row.hint_cost[index] : 0
+                cost: row.hint_cost?.[index] !== undefined ? row.hint_cost[index] : 0
               }
               hints.push(hint)
             }

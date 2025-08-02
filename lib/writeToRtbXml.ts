@@ -11,15 +11,13 @@ import 'colors'
 const fs = require('fs')
 Bluebird.promisifyAll(fs)
 
-interface WriteToRtbXmlFunction {
-  (report: string | object, desiredFileName?: string): Promise<string>
-}
+type WriteToRtbXmlFunction = (report: string | object, desiredFileName?: string) => Promise<string>
 
-const writeToRtbXml: WriteToRtbXmlFunction = function (
+const writeToRtbXml: WriteToRtbXmlFunction = async function (
   report: string | object,
   desiredFileName?: string
 ): Promise<string> {
-  return new Bluebird((resolve: (value: string) => void, reject: (reason?: any) => void) => {
+  return await new Bluebird((resolve: (value: string) => void, reject: (reason?: any) => void) => {
     const fileName: string = desiredFileName || 'OWASP_Juice_Shop.' + dateFormat(new Date(), 'yyyy-mm-dd') + '.RTB.xml'
 
     let xmlContent: string | object = report
