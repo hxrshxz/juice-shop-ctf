@@ -14,9 +14,7 @@ const path = require('path')
 const fbctfOptions = require('../options')
 const hmac = require('../hmac')
 
-interface GenerateRandomString {
-  (length: number): string
-}
+type GenerateRandomString = (length: number) => string
 
 const generateRandomString: GenerateRandomString = function (length: number): string {
   let text = ''

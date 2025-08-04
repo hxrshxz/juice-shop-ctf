@@ -11,9 +11,7 @@ const ctfOptions = require('../options')
 const createCtfdExport = require('./ctfd')
 const createRtbExport = require('./rtb')
 const createFbctfExport = require('./fbctf')
-interface Challenge {
-  [key: string]: any
-}
+type Challenge = Record<string, any>
 
 interface ExportSettings {
   outputLocation: string
@@ -61,7 +59,7 @@ async function generateCTFExport (
       console.log()
       console.log('For a step-by-step guide to import this file into ' + 'RootTheBox'.bold + ', please refer to')
       console.log('https://pwning.owasp-juice.shop/companion-guide/latest/part4/ctf.html#_running_rootthebox'.bold)
-    } catch (error : any) {
+    } catch (error: any) {
       console.error('Error in RTB export:', error.message)
     }
   }

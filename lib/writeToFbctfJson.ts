@@ -8,9 +8,7 @@ import fs from 'node:fs/promises'
 import dateFormat from 'dateformat'
 import 'colors'
 
-interface WriteToFbctfJsonFunction {
-  (report: any, desiredFileName?: string): Promise<string>
-}
+type WriteToFbctfJsonFunction = (report: any, desiredFileName?: string) => Promise<string>
 
 const writeToFbctfJson: WriteToFbctfJsonFunction = async function (
   report: any,

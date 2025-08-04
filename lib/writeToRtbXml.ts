@@ -8,15 +8,12 @@ import * as path from 'node:path'
 import dateFormat from 'dateformat'
 import 'colors'
 
-interface WriteToRtbXmlFunction {
-  (report: string | object, desiredFileName?: string): Promise<string>
-}
+type WriteToRtbXmlFunction = (report: string | object, desiredFileName?: string) => Promise<string>
 
 const writeToRtbXml: WriteToRtbXmlFunction = async function (
   report: string | object,
   desiredFileName?: string
 ): Promise<string> {
-
   const fileName: string = desiredFileName || 'OWASP_Juice_Shop.' + dateFormat(new Date(), 'yyyy-mm-dd') + '.RTB.xml'
 
   const xmlContent: string = typeof report === 'string' ? report : JSON.stringify(report, null, 2)
