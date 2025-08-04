@@ -7,13 +7,13 @@ import * as https from 'https'
 import type { Challenge } from './types/types';
 
 interface FetchOptions {
-  juiceShopUrl: string;
-  ignoreSslWarnings?: boolean;
-  skip?: boolean;
+  juiceShopUrl: string
+  ignoreSslWarnings?: boolean
+  skip?: boolean
 }
 
 interface SnippetApiResponse {
-  snippet: string;
+  snippet: string
 }
 
 async function fetchCodeSnippets(
@@ -21,20 +21,20 @@ async function fetchCodeSnippets(
   { fetch = globalThis.fetch } = { fetch: globalThis.fetch }
 ): Promise<{ [key: string]: string }> {
   if (skip) {
-    return {};
+    return {}
   }
 
   const agent = ignoreSslWarnings
     ? new https.Agent({ rejectUnauthorized: false })
-    : undefined;
+    : undefined
 
-  const fetchOptions: { agent: https.Agent | undefined } = { agent };
+  const fetchOptions: { agent: https.Agent | undefined } = { agent }
 
   try {
     const challengesResponse = await fetch(`${juiceShopUrl}/api/challenges`, fetchOptions as any);
 
     if (!challengesResponse.ok) {
-      throw new Error(`Snippets API returned status ${challengesResponse.status}`);
+      throw new Error(`Snippets API returned status ${challengesResponse.status}`)
     }
     
     const { data: challenges} = await challengesResponse.json() as { data: Challenge[]};
@@ -59,10 +59,10 @@ async function fetchCodeSnippets(
         snippets[challenge.key] = snippetData.snippet;
       }
     }
-    
-    return snippets;
+
+    return snippets
   } catch (error: any) {
-    throw new Error('Failed to fetch snippet from API! ' + error.message);
+    throw new Error('Failed to fetch snippet from API! ' + error.message)
   }
 }
 

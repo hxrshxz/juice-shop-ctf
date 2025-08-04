@@ -12,9 +12,7 @@ import { options as juiceShopOptions } from '../options'
 import hmacSha1 from '../hmac'
 import type { BaseExportSettings, Challenge, FbctfTemplate } from '../types/types'
 
-interface GenerateRandomString {
-  (length: number): string
-}
+type GenerateRandomString = (length: number) => string
 
 const generateRandomString: GenerateRandomString = function (length: number): string {
   let text = ''

@@ -65,12 +65,12 @@ function createCtfdExport(
             type_data: '',
             hints: ''
           }
-          const hints: { content: string, cost: number }[] = []
+          const hints: Array<{ content: string, cost: number }> = []
           if (row.hints_raw && row.hints_raw.length !== 0) {
             for (let index = 0; index < row.hints_raw.length; index++) {
               const hint = {
                 content: row.hints_raw[index],
-                cost: row.hint_cost && row.hint_cost[index] !== undefined ? row.hint_cost[index] : 0
+                cost: row.hint_cost?.[index] !== undefined ? row.hint_cost[index] : 0
               }
               hints.push(hint)
             }

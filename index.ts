@@ -103,7 +103,7 @@ interface Argv {
   [key: string]: any
 }
 
-function getConfig (
+async function getConfig (
   argv: Argv,
   questions: Array<Record<string, any>>
 ): Promise<ConfigAnswers> {
@@ -118,7 +118,7 @@ function getConfig (
       insertHintSnippets: config.insertHintSnippets
     }))
   }
-  return inquirer.prompt(questions)
+  return await inquirer.prompt(questions)
 }
 
 export default async function juiceShopCtfCli() {

@@ -13,7 +13,7 @@ async function fetchSecretKey(
 ) {
   const agent = ignoreSslWarnings
     ? new https.Agent({ rejectUnauthorized: false })
-    : undefined;
+    : undefined
 
   if (origin && isUrl(origin)) {
   try {
@@ -27,12 +27,12 @@ async function fetchSecretKey(
       return body;
     } catch (err) {
       throw new Error(
-        "Failed to fetch secret key from URL! " +
+        'Failed to fetch secret key from URL! ' +
           (err instanceof Error ? err.message : String(err))
-      );
+      )
     }
   } else {
-    return origin;
+    return origin
   }
 }
 

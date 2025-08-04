@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-import xmlBuilder from "xmlbuilder"
+import xmlBuilder from 'xmlbuilder'
 import TurndownService from 'turndown'
-import calculateScore from "../calculateScore"
-import calculateHintCost from "../calculateHintCost"
+import calculateScore from '../calculateScore'
+import calculateHintCost from '../calculateHintCost'
 import INITIAL_RTB_TEMPLATE from '../../data/rtbImportTemplate.json'
 import { Challenge, BaseExportSettings } from '../types/types'
 
@@ -100,7 +100,7 @@ function createRtbExport(
       let count = 0
       if (includeHint) {
         const hint = hints.ele('hint')
-        hint.ele('description', turndownService.turndown(challenge.hint as string))
+        hint.ele('description', turndownService.turndown(challenge.hint!))
         hint.ele('price', calculateHintCost(challenge, insertHints))
         count += 1
       }
@@ -163,9 +163,7 @@ function createRtbExport(
       flags.att({ count: i.toString() })
     }
 
-  interface DifficultyText {
-    (value: number): string
-  }
+  type DifficultyText = (value: number) => string
 
   const difficultyText: DifficultyText = function (value: number): string {
     let difficulty = ''
@@ -191,12 +189,12 @@ function insertFlag(
     turndownService.turndown(challenge.description) +
       " **Difficulty** " +
       difficultyText(challenge.difficulty)
-  );
-  flag.ele("token", hmacSha1(ctfKey, challenge.name));
-  flag.ele("value", calculateScore(challenge.difficulty));
-  flag.ele("order", order.toString());
-  insertHint(challenge, flag);
-}
+    )
+    flag.ele('token', hmacSha1(ctfKey, challenge.name))
+    flag.ele('value', calculateScore(challenge.difficulty))
+    flag.ele('order', order.toString())
+    insertHint(challenge, flag)
+  }
 
   interface ChallengeCategory {
     category: string
@@ -208,24 +206,24 @@ function insertFlag(
     up: () => XmlElement
   }
 
-function insertCategories(
-  challenges: Record<string, ChallengeCategory>,
-  xmlRTB: XmlElement
-): Set<string> {
-  const categories = new Set<string>()
-  for (const key in challenges) {
-    categories.add(challenges[key].category)
+  function insertCategories (
+    challenges: Record<string, ChallengeCategory>,
+    xmlRTB: XmlElement
+  ): Set<string> {
+    const categories = new Set<string>()
+    for (const key in challenges) {
+      categories.add(challenges[key].category)
+    }
+    if (categories.size > 0) {
+      const categoriesXml = xmlRTB.ele('categories', { count: categories.size })
+      // Convert to Array first
+      Array.from(categories).forEach(category => {
+        categoriesXml.ele('category').ele('category', category as any)
+      })
+      categoriesXml.up()
+    }
+    return categories
   }
-  if (categories.size > 0) {
-    const categoriesXml = xmlRTB.ele('categories', { count: categories.size })
-    // Convert to Array first
-    Array.from(categories).forEach(category => {
-      categoriesXml.ele('category').ele('category', category as any)
-    })
-    categoriesXml.up()
-  }
-  return categories
-}
 
   interface XmlRTBElement {
     ele: (name: string, attributes?: Record<string, any>) => XmlRTBElement
@@ -301,30 +299,30 @@ function insertCategories(
   return JSON.parse(template.toString())
 }
 
-return new Promise((resolve, reject) => {
-  try {
-    rtbTemplate = loadTemplate()
-    const xmlRTB = xmlBuilder.create('rootthebox', { version: '1.0', encoding: 'UTF-8' }).att('api', '1')
-    insertConfiguration(xmlRTB)
-    xmlRTB.ele('gamelevels', { count: '1' }).up()
-    const categories = insertCategories(challenges, xmlRTB)
-    const boxes = insertCorporation(categories, xmlRTB)
-    const sortedChallenges = sortByDifficulty(challenges)
+  return await new Promise((resolve, reject) => {
+    try {
+      rtbTemplate = loadTemplate()
+      const xmlRTB = xmlBuilder.create('rootthebox', { version: '1.0', encoding: 'UTF-8' }).att('api', '1')
+      insertConfiguration(xmlRTB)
+      xmlRTB.ele('gamelevels', { count: '1' }).up()
+      const categories = insertCategories(challenges, xmlRTB)
+      const boxes = insertCorporation(categories, xmlRTB)
+      const sortedChallenges = sortByDifficulty(challenges)
 
-    // Convert Set to Array before iteration
-    Array.from(categories).forEach(category => {
-      insertBoxes(sortedChallenges, boxes, category)
-    })
+      // Convert Set to Array before iteration
+      Array.from(categories).forEach(category => {
+        insertBoxes(sortedChallenges, boxes, category)
+      })
 
-    resolve(xmlRTB.end({ pretty: true }))
-  } catch (error) {
-    if (error instanceof Error) {
-      reject(new Error('Failed to generate challenge data! ' + error.message))
-    } else {
-      reject(new Error('Failed to generate challenge data!'))
+      resolve(xmlRTB.end({ pretty: true }))
+    } catch (error) {
+      if (error instanceof Error) {
+        reject(new Error('Failed to generate challenge data! ' + error.message))
+      } else {
+        reject(new Error('Failed to generate challenge data!'))
+      }
     }
-  }
-})
+  })
 }
 
 export default createRtbExport
