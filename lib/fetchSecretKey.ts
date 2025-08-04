@@ -6,14 +6,15 @@
 import isUrl from './url'
 import * as https from 'https'
 
-async function fetchSecretKey (origin: string, ignoreSslWarnings: boolean) {
+async function fetchSecretKey (origin: string, ignoreSslWarnings: boolean = false): Promise<string | undefined> {
   const agent = ignoreSslWarnings
     ? new https.Agent({ rejectUnauthorized: false })
     : undefined
-
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (origin && isUrl(origin)) {
     try {
-      const response = await fetch(origin, { agent } as any)
+      const fetchOptions: RequestInit & { agent?: https.Agent } = { agent }
+      const response = await fetch(origin, fetchOptions)
 
       if (!response.ok) {
         throw new Error(`Failed to fetch: ${response.status}`)

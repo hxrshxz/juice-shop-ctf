@@ -9,8 +9,6 @@ import calculateScore from '../calculateScore'
 import FBCTF_TEMPLATE from '../../data/fbctfImportTemplate.json'
 
 const { hash } = require('bcryptjs')
-const { readFile } = require('fs')
-const path = require('path')
 const fbctfOptions = require('../options')
 const hmac = require('../hmac')
 
