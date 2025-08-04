@@ -51,8 +51,8 @@
     "prepare": "npm run build",
     "coverage": "nyc report --reporter=lcov",
     "e2e": "mocha dist/test/e2e/juiceShopCtfCli-spec.js --slow=25000 --timeout=45000",
-    "lint": "standard",
-    "lint:fix": "standard --fix",
+    "lint": "eslint index.ts bin lib --ext .ts",
+    "lint:fix": "eslint index.ts bin lib --ext .ts --fix",
     "test": "nyc --reporter=html --reporter=text mocha test/unit",
     "node:test": "c8 --extension .ts node --test --import tsx test/unit/*.spec.ts"
   },
